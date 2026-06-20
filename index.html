@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食品蛋白質單元 即時互動測驗（25題）</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin:0; background:#f5f6f8; color:#1d2330; font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif; line-height:1.6; }
+.wrap { max-width:760px; margin:0 auto; padding:24px 18px 90px; }
+h1 { font-size:22px; margin:0 0 4px; }
+.sub { color:#6b7280; font-size:13px; margin-bottom:18px; }
+.bar { position:sticky; top:0; background:#f5f6f8; padding:10px 0; z-index:5; border-bottom:1px solid #e3e6ea; margin-bottom:14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.prog { font-size:13px; color:#374151; font-weight:600; white-space:nowrap; }
+.track { flex:1; min-width:120px; height:8px; background:#e3e6ea; border-radius:6px; overflow:hidden; }
+.fill { height:100%; width:0; background:#2563eb; transition:width .3s; }
+.score { font-size:13px; font-weight:700; color:#16a34a; white-space:nowrap; }
+.card { background:#fff; border:1px solid #e3e6ea; border-radius:12px; padding:16px 18px; margin-bottom:14px; box-shadow:0 1px 2px rgba(0,0,0,.03); }
+.q { font-weight:600; margin-bottom:12px; }
+.q .num { color:#2563eb; margin-right:6px; }
+.opt { display:block; border:1px solid #d7dbe0; border-radius:9px; padding:10px 12px; margin:8px 0; cursor:pointer; transition:.15s; background:#fff; }
+.opt:hover { border-color:#2563eb; background:#f0f5ff; }
+.opt .k { font-weight:700; margin-right:8px; }
+.opt.correct { border-color:#16a34a; background:#e9f9ee; cursor:default; }
+.opt.wrong { border-color:#dc2626; background:#fdecec; cursor:default; }
+.locked .opt { cursor:default; }
+.locked .opt:hover { border-color:#d7dbe0; background:#fff; }
+.locked .opt.correct:hover { border-color:#16a34a; background:#e9f9ee; }
+.locked .opt.wrong:hover { border-color:#dc2626; background:#fdecec; }
+.fb { margin-top:10px; font-size:13.5px; padding:10px 12px; border-radius:8px; display:none; }
+.fb .tag { font-weight:700; margin-right:6px; }
+.fb.ok { background:#e9f9ee; color:#15803d; }
+.fb.no { background:#fdecec; color:#b91c1c; }
+.btn { background:#fff; color:#2563eb; border:1px solid #2563eb; border-radius:10px; padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer; }
+.done { background:#fff; border:1px solid #2563eb; border-radius:12px; padding:18px; text-align:center; margin-top:10px; display:none; }
+.done .big { font-size:34px; font-weight:800; color:#2563eb; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>食品蛋白質單元 · 即時互動測驗</h1>
+  <div class="sub">25 題單選 · 點下去馬上判對錯、答錯立刻看詳解 · 範圍：蛋白質變性／等電點／胺基酸結構與分類／膠原蛋白·明膠／麵筋／限制性胺基酸／鹽濃度</div>
+
+  <div class="bar">
+    <span class="prog" id="prog">進度 0 / 25</span>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <span class="score" id="score">答對 0</span>
+  </div>
+
+  <div id="quiz"></div>
+
+  <div class="done" id="done">
+    <div class="big" id="bigScore">0 / 25</div>
+    <div id="doneMsg" style="margin:6px 0 12px;"></div>
+    <button class="btn" id="reset">重做一次</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+ {q:"下列關於「蛋白質變性（denaturation）」的敘述，何者正確？",o:["一級結構的胜肽鍵被破壞，胺基酸序列改變","蛋白質的高級結構（二、三、四級）被破壞而失去原有性質","胺基酸的數目減少","蛋白質分子量明顯增加"],a:1,e:"變性是破壞二級以上的高級結構（氫鍵、雙硫鍵、疏水鍵等），一級結構的胜肽鍵與胺基酸序列不變。"},
+ {q:"蛋白質變性過程中，下列何種鍵結通常「不會」被破壞？",o:["氫鍵","雙硫鍵","疏水性作用力","胜肽鍵"],a:3,e:"變性不涉及一級結構，胜肽鍵維持完整；被破壞的是維持高級結構的氫鍵、雙硫鍵、疏水鍵等。"},
+ {q:"下列何者「不是」造成蛋白質變性的常見因素？",o:["加熱","強酸或強鹼","重金屬離子","於常溫、生理 pH 下短暫靜置"],a:3,e:"加熱、極端 pH、重金屬、有機溶劑、紫外線、機械力都會變性；常溫且生理 pH 下蛋白質維持原狀。"},
+ {q:"關於「等電點（pI）」的定義，下列何者正確？",o:["蛋白質帶最多正電荷時的 pH","蛋白質淨電荷為零時的 pH","蛋白質溶解度最高時的 pH","蛋白質黏度最高時的 pH"],a:1,e:"等電點是蛋白質正負電荷相抵、淨電荷為零的 pH。"},
+ {q:"蛋白質處於等電點時，下列何種性質通常為「最低」？",o:["溶解度","分子量","胺基酸數目","胜肽鍵數目"],a:0,e:"等電點時分子間靜電排斥最小，易聚集沉澱，故溶解度最低。"},
+ {q:"當溶液 pH 高於蛋白質的等電點時，該蛋白質所帶的淨電荷為？",o:["正電","負電","零","與 pH 無關"],a:1,e:"pH > pI 時環境偏鹼，蛋白質釋出質子帶負電；pH < pI 則帶正電。"},
+ {q:"製作優酪乳時牛奶會凝固，主要是因為乳酸使 pH 下降到酪蛋白的？",o:["沸點","等電點","熔點","冰點"],a:1,e:"乳酸菌產酸使 pH 降至酪蛋白等電點（約 4.6），酪蛋白失去電荷而聚集凝固。"},
+ {q:"下列何者「會」明顯受到溫度影響？",o:["胺基酸的種類","胜肽鍵的數目","蛋白質的變性與凝固程度","蛋白質的一級結構序列"],a:2,e:"溫度升高會促使蛋白質變性、凝固；胺基酸種類、數目與一級序列不因溫度而改變。"},
+ {q:"胺基酸的基本結構中，與中心（α-）碳相連的官能基「不」包含下列何者？",o:["胺基（-NH₂）","羧基（-COOH）","氫原子","磷酸基（-PO₄）"],a:3,e:"α-碳上接胺基、羧基、氫原子與一個側鏈 R，不含磷酸基。"},
+ {q:"胺基酸與胺基酸之間，是以何種鍵結相互連接形成蛋白質？",o:["雙硫鍵","胜肽鍵","氫鍵","離子鍵"],a:1,e:"前一胺基酸的羧基與後一胺基酸的胺基脫水縮合形成胜肽鍵。"},
+ {q:"胺基酸結構中，使其同時可帶正電與負電（兩性）的關鍵是？",o:["同時具有胺基與羧基","只含羧基","只含胺基","含有苯環"],a:0,e:"胺基可接受質子帶正電、羧基可釋出質子帶負電，故胺基酸具兩性。"},
+ {q:"「豬皮膠凍」能夠凝固，主要是利用豬皮中何種蛋白質？",o:["肌凝蛋白","膠原蛋白（明膠）","白蛋白","球蛋白"],a:1,e:"豬皮富含膠原蛋白，加熱水解成明膠，冷卻後形成凝膠。"},
+ {q:"膠原蛋白經加熱水解後，會轉變成下列何者？",o:["明膠（gelatin）","角蛋白","彈性蛋白","酪蛋白"],a:0,e:"膠原蛋白受熱三股螺旋解開、水解為明膠，可形成可逆凝膠。"},
+ {q:"豬皮膠凍冷卻後凝固、加熱後又融化，顯示明膠膠凍屬於？",o:["熱可逆凝膠","不可逆凝膠","化學交聯凝膠","永久變性產物"],a:0,e:"明膠靠氫鍵形成網狀，遇熱融化、遇冷凝固，可反覆變化，屬熱可逆凝膠。"},
+ {q:"下列何種蛋白質賦予小麥麵糰特有的彈性與延展性？",o:["澱粉","麩質（麵筋，gluten）","脂肪","膳食纖維"],a:1,e:"麵筋吸水後形成黏彈性網絡，提供麵糰彈性與延展性。"},
+ {q:"小麥麵筋（gluten）主要由下列哪兩種蛋白質組成？",o:["醇溶蛋白與麥穀蛋白","白蛋白與球蛋白","膠原蛋白與彈性蛋白","肌凝蛋白與肌動蛋白"],a:0,e:"麵筋由醇溶蛋白（gliadin，提供延展性）與麥穀蛋白（glutenin，提供彈性）組成。"},
+ {q:"小麥蛋白的「限制性胺基酸」主要為下列何者？",o:["離胺酸（Lysine）","甲硫胺酸","白胺酸","色胺酸"],a:0,e:"穀類（含小麥）的第一限制胺基酸普遍為離胺酸；豆類則常缺甲硫胺酸，故穀豆互補。"},
+ {q:"「限制性胺基酸（limiting amino acid）」的意義為？",o:["含量最高的必需胺基酸","相對於人體需求量，含量最不足的必需胺基酸","人體可自行合成的胺基酸","完全無法被人體吸收的胺基酸"],a:1,e:"限制胺基酸是相對需求量最缺乏的必需胺基酸，會限制整體蛋白質利用率。"},
+ {q:"在蛋白質溶液中加入「高濃度」鹽類使蛋白質沉澱，此現象稱為？",o:["鹽溶","鹽析","水合","乳化"],a:1,e:"高鹽搶奪水分子、降低溶解度使蛋白質沉澱，稱鹽析（salting out）。"},
+ {q:"在蛋白質溶液中加入「低濃度」鹽類使其溶解度增加，此現象稱為？",o:["鹽析","鹽溶","等電點沉澱","凝固"],a:1,e:"低濃度鹽增加離子強度、促進水合，使溶解度上升，稱鹽溶（salting in）。"},
+ {q:"下列何者屬於「酸性胺基酸」？",o:["離胺酸","天門冬胺酸（Aspartic acid）","白胺酸","絲胺酸"],a:1,e:"酸性胺基酸側鏈帶羧基，包括天門冬胺酸與麩胺酸。"},
+ {q:"下列何者屬於「鹼性胺基酸」？",o:["麩胺酸","精胺酸（Arginine）","丙胺酸","纈胺酸"],a:1,e:"鹼性胺基酸側鏈帶胺基/胍基，包括精胺酸、離胺酸、組胺酸。"},
+ {q:"下列何者屬於「疏水性（非極性）胺基酸」？",o:["白胺酸（Leucine）","天門冬胺酸","離胺酸","麩胺酸"],a:0,e:"白胺酸側鏈為非極性烷基，屬疏水性胺基酸。"},
+ {q:"下列何者屬於含羥基（-OH）的「羥基胺基酸」？",o:["絲胺酸（Serine）","白胺酸","精胺酸","麩胺酸"],a:0,e:"絲胺酸、蘇胺酸（及含酚羥基的酪胺酸）側鏈帶 -OH，屬羥基胺基酸。"},
+ {q:"下列何者屬於「醯胺型胺基酸」？",o:["麩醯胺酸（Glutamine）","麩胺酸","離胺酸","甘胺酸"],a:0,e:"麩醯胺酸與天門冬醯胺側鏈含醯胺基（-CONH₂），為醯胺型胺基酸。"},
+];
+
+const KEYS=["A","B","C","D"];
+const quiz=document.getElementById('quiz');
+let chosen=Array(QUESTIONS.length).fill(null); // 已選的選項索引，null=未答
+
+function build(){
+  quiz.innerHTML='';
+  QUESTIONS.forEach((item,i)=>{
+    const card=document.createElement('div');
+    card.className='card';card.id='card'+i;
+    let opts='';
+    item.o.forEach((t,j)=>{
+      opts+=`<label class="opt" data-q="${i}" data-o="${j}"><span class="k">${KEYS[j]}</span>${t}</label>`;
+    });
+    card.innerHTML=`<div class="q"><span class="num">${i+1}.</span>${item.q}</div>${opts}<div class="fb" id="fb${i}"></div>`;
+    quiz.appendChild(card);
+  });
+  refresh();
+}
+
+quiz.addEventListener('click',e=>{
+  const l=e.target.closest('.opt');
+  if(!l) return;
+  const i=+l.dataset.q, j=+l.dataset.o;
+  if(chosen[i]!==null) return;       // 已作答則鎖定，不可改
+  chosen[i]=j;
+  const item=QUESTIONS[i];
+  const card=document.getElementById('card'+i);
+  card.classList.add('locked');
+  // 標記正解 / 標記答錯所選
+  card.querySelectorAll('.opt').forEach(op=>{
+    const oj=+op.dataset.o;
+    if(oj===item.a) op.classList.add('correct');
+    else if(oj===j) op.classList.add('wrong');
+  });
+  // 詳解（答對也顯示，答錯更醒目）
+  const ok=(j===item.a);
+  const fb=document.getElementById('fb'+i);
+  fb.className='fb '+(ok?'ok':'no');
+  fb.style.display='block';
+  fb.innerHTML=ok
+    ? `<span class="tag">✔ 答對</span>${item.e}`
+    : `<span class="tag">✘ 答錯　正解：${KEYS[item.a]}</span>${item.e}`;
+  refresh();
+});
+
+function refresh(){
+  const done=chosen.filter(x=>x!==null).length;
+  const correct=chosen.reduce((s,c,i)=>s+(c===QUESTIONS[i].a?1:0),0);
+  document.getElementById('prog').textContent=`進度 ${done} / ${QUESTIONS.length}`;
+  document.getElementById('fill').style.width=(done/QUESTIONS.length*100)+'%';
+  document.getElementById('score').textContent=`答對 ${correct}`;
+  if(done===QUESTIONS.length){
+    const box=document.getElementById('done');box.style.display='block';
+    document.getElementById('bigScore').textContent=`${correct} / ${QUESTIONS.length}`;
+    const pct=correct/QUESTIONS.length;
+    document.getElementById('doneMsg').textContent=
+      pct===1?'滿分！蛋白質這單元很穩。':pct>=0.8?'表現不錯，回頭看標紅那幾題即可。':pct>=0.6?'及格，建議把答錯的詳解再讀一遍。':'再練一輪，對照詳解複習觀念。';
+  }
+}
+
+document.getElementById('reset').addEventListener('click',()=>{
+  chosen=Array(QUESTIONS.length).fill(null);
+  document.getElementById('done').style.display='none';
+  build();
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+build();
+</script>
+</body>
+</html>
