@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食品蛋白質單元 即時互動測驗 第二版（25題）</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin:0; background:#f5f6f8; color:#1d2330; font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif; line-height:1.6; }
+.wrap { max-width:760px; margin:0 auto; padding:24px 18px 90px; }
+h1 { font-size:22px; margin:0 0 4px; }
+.sub { color:#6b7280; font-size:13px; margin-bottom:18px; }
+.bar { position:sticky; top:0; background:#f5f6f8; padding:10px 0; z-index:5; border-bottom:1px solid #e3e6ea; margin-bottom:14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.prog { font-size:13px; color:#374151; font-weight:600; white-space:nowrap; }
+.track { flex:1; min-width:120px; height:8px; background:#e3e6ea; border-radius:6px; overflow:hidden; }
+.fill { height:100%; width:0; background:#7c3aed; transition:width .3s; }
+.score { font-size:13px; font-weight:700; color:#16a34a; white-space:nowrap; }
+.card { background:#fff; border:1px solid #e3e6ea; border-radius:12px; padding:16px 18px; margin-bottom:14px; box-shadow:0 1px 2px rgba(0,0,0,.03); }
+.q { font-weight:600; margin-bottom:12px; }
+.q .num { color:#7c3aed; margin-right:6px; }
+.opt { display:block; border:1px solid #d7dbe0; border-radius:9px; padding:10px 12px; margin:8px 0; cursor:pointer; transition:.15s; background:#fff; }
+.opt:hover { border-color:#7c3aed; background:#f5f0ff; }
+.opt .k { font-weight:700; margin-right:8px; }
+.opt.correct { border-color:#16a34a; background:#e9f9ee; cursor:default; }
+.opt.wrong { border-color:#dc2626; background:#fdecec; cursor:default; }
+.locked .opt { cursor:default; }
+.locked .opt:hover { border-color:#d7dbe0; background:#fff; }
+.locked .opt.correct:hover { border-color:#16a34a; background:#e9f9ee; }
+.locked .opt.wrong:hover { border-color:#dc2626; background:#fdecec; }
+.fb { margin-top:10px; font-size:13.5px; padding:10px 12px; border-radius:8px; display:none; }
+.fb .tag { font-weight:700; margin-right:6px; }
+.fb.ok { background:#e9f9ee; color:#15803d; }
+.fb.no { background:#fdecec; color:#b91c1c; }
+.btn { background:#fff; color:#7c3aed; border:1px solid #7c3aed; border-radius:10px; padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer; }
+.done { background:#fff; border:1px solid #7c3aed; border-radius:12px; padding:18px; text-align:center; margin-top:10px; display:none; }
+.done .big { font-size:34px; font-weight:800; color:#7c3aed; }
+.nav { font-size:13px; margin-bottom:14px; }
+.nav a { color:#7c3aed; text-decoration:none; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>食品蛋白質單元 · 即時互動測驗（第二版）</h1>
+  <div class="sub">25 題單選 · 點下去馬上判對錯、答錯立刻看詳解 · 範圍：蛋白質變性／等電點／胺基酸結構與分類／膠原蛋白·明膠／麵筋／限制性胺基酸／鹽濃度</div>
+  <div class="nav">← 想做第一版？<a href="./">點這裡</a></div>
+
+  <div class="bar">
+    <span class="prog" id="prog">進度 0 / 25</span>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <span class="score" id="score">答對 0</span>
+  </div>
+
+  <div id="quiz"></div>
+
+  <div class="done" id="done">
+    <div class="big" id="bigScore">0 / 25</div>
+    <div id="doneMsg" style="margin:6px 0 12px;"></div>
+    <button class="btn" id="reset">重做一次</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+ {q:"蛋白質變性後，下列何種性質通常會「改變」？",o:["胺基酸的排列順序","蛋白質的分子量","生物活性與溶解度","胜肽鍵的數目"],a:2,e:"變性破壞高級結構，導致生物活性喪失、溶解度下降；一級結構（序列、胜肽鍵、分子量）不變。"},
+ {q:"雞蛋加熱變成水煮蛋而凝固，屬於下列何種現象？",o:["鹽析","熱變性","乳化","水解"],a:1,e:"加熱使蛋白質高級結構展開並交聯凝固，屬熱變性。"},
+ {q:"下列何者是蛋白質「可逆變性」較典型的例子？",o:["水煮蛋凝固","明膠加熱融化、冷卻又凝固","牛奶加酸結塊","肉類煎到焦化"],a:1,e:"明膠靠氫鍵成膠，遇熱融、遇冷凝，可反覆變化；多數加熱凝固屬不可逆變性。"},
+ {q:"蛋白質的變性程度通常「不」受下列何者影響？",o:["溫度高低","加熱時間長短","溶液 pH 值","元素的原子序"],a:3,e:"變性受溫度、時間、pH、鹽、重金屬等影響；與元素原子序無關。"},
+ {q:"關於等電點（pI），下列敘述何者「錯誤」？",o:["等電點時蛋白質淨電荷為零","等電點時溶解度通常最低","所有蛋白質的等電點都相同","可利用等電點差異分離蛋白質"],a:2,e:"不同蛋白質胺基酸組成不同，等電點各異，這正是等電點電泳/沉澱可用來分離的原因。"},
+ {q:"某蛋白質等電點為 5.0，置於 pH 7 的溶液中，其帶電狀態為？",o:["帶正電","帶負電","不帶電","無法判斷"],a:1,e:"pH（7）> pI（5）時環境偏鹼，蛋白質帶負電。"},
+ {q:"利用「等電點沉澱」分離某蛋白質，應把溶液 pH 調到？",o:["遠高於其 pI","遠低於其 pI","等於該蛋白質的 pI","固定為 pH 14"],a:2,e:"pH = pI 時淨電荷為零、排斥力最小，最易聚集沉澱。"},
+ {q:"傳統豆腐用鹽滷或石膏使豆漿凝固，主要利用？",o:["電解質（鹽類離子）使大豆蛋白凝聚","把豆漿加酸煮沸","酵素將蛋白質水解","低溫冷凍"],a:0,e:"鹽滷（氯化鎂）、石膏（硫酸鈣）提供離子，中和電荷使大豆蛋白凝聚成凝膠。"},
+ {q:"胺基酸通式中，決定各種胺基酸性質差異的是哪一部分？",o:["胺基（-NH₂）","羧基（-COOH）","側鏈 R 基","α-碳上的氫"],a:2,e:"所有胺基酸都有胺基、羧基、氫與 α-碳，差別在側鏈 R，決定酸鹼性、極性等性質。"},
+ {q:"組成人體蛋白質的標準胺基酸共有幾種？",o:["4 種","10 種","20 種","64 種"],a:2,e:"標準胺基酸共 20 種；其中數種為人體無法自行合成的必需胺基酸。"},
+ {q:"下列何者屬於「必需胺基酸」（須由食物攝取）？",o:["離胺酸","甘胺酸","絲胺酸","丙胺酸"],a:0,e:"離胺酸為必需胺基酸；甘胺酸、絲胺酸、丙胺酸人體可自行合成。"},
+ {q:"兩個胺基酸形成胜肽鍵時，會脫去一分子下列何者？",o:["二氧化碳","水","氨","氧氣"],a:1,e:"羧基與胺基脫水縮合形成胜肽鍵，失去一分子水。"},
+ {q:"明膠（gelatin）與原本的膠原蛋白相比，下列何者正確？",o:["三股螺旋結構已被破壞","分子量明顯變大","變成必需胺基酸完整的優質蛋白","完全不溶於熱水"],a:0,e:"加熱使膠原蛋白三股螺旋解開、部分水解而成明膠，可溶於熱水並形成可逆凝膠。"},
+ {q:"膠原蛋白在結構分類上屬於下列何種蛋白質？",o:["球狀蛋白","纖維狀蛋白","脂蛋白","核蛋白"],a:1,e:"膠原蛋白是典型纖維狀（結構性）蛋白，提供結締組織強度。"},
+ {q:"明膠營養價值偏低，主要因為幾乎缺乏哪一種必需胺基酸？",o:["色胺酸","麩胺酸","甘胺酸","脯胺酸"],a:0,e:"明膠幾乎不含色胺酸，屬不完全蛋白，故單獨食用營養價值低。"},
+ {q:"做麵包時麵糰能膨脹並保留發酵氣體，主要靠麵筋的何種特性？",o:["甜味","黏彈性網絡","高油脂","高溶解度"],a:1,e:"麵筋吸水形成黏彈性網絡，能包覆並保留二氧化碳，使麵包膨發。"},
+ {q:"下列何者「不」含麩質（麵筋），常用於無麩質飲食？",o:["小麥","大麥","白米／玉米","黑麥"],a:2,e:"小麥、大麥、黑麥含麩質；米、玉米不含，適合無麩質飲食。"},
+ {q:"「穀類＋豆類」搭配食用可提高蛋白質利用率，原理是？",o:["限制胺基酸互補","增加脂肪含量","降低食物 pH","提高鹽分"],a:0,e:"穀類缺離胺酸、豆類缺甲硫胺酸，兩者互補使必需胺基酸更完整。"},
+ {q:"實驗室常用高濃度硫酸銨進行蛋白質「鹽析」純化，其原理是？",o:["提高蛋白質溶解度","與蛋白質爭奪水分子使其析出沉澱","切斷胜肽鍵","加熱使其變性"],a:1,e:"高濃度鹽奪取水合水、降低溶解度，使蛋白質聚集沉澱（salting out），且通常不破壞結構。"},
+ {q:"下列關於鹽溶與鹽析的敘述，何者正確？",o:["低濃度鹽鹽溶、可增加溶解度","高濃度鹽會使溶解度上升","鹽析會破壞蛋白質一級結構","鹽溶會使蛋白質永久變性"],a:0,e:"低鹽增加離子強度促進水合（鹽溶）；高鹽降低溶解度致沉澱（鹽析），二者皆不破壞一級結構。"},
+ {q:"下列何者屬於側鏈帶羧基的「酸性胺基酸」？",o:["麩胺酸（Glutamic acid）","精胺酸","白胺酸","絲胺酸"],a:0,e:"酸性胺基酸側鏈帶羧基，包括麩胺酸與天門冬胺酸。"},
+ {q:"下列何者屬於「鹼性胺基酸」？",o:["離胺酸（Lysine）","天門冬胺酸","白胺酸","絲胺酸"],a:0,e:"鹼性胺基酸側鏈帶胺基/胍基/咪唑基，包括離胺酸、精胺酸、組胺酸。"},
+ {q:"下列何者屬於含羥基（-OH）的「羥基胺基酸」？",o:["蘇胺酸（Threonine）","白胺酸","麩胺酸","精胺酸"],a:0,e:"絲胺酸、蘇胺酸（及含酚羥基的酪胺酸）側鏈帶 -OH，屬羥基胺基酸。"},
+ {q:"下列何者屬於「醯胺型胺基酸」？",o:["天門冬醯胺（Asparagine）","天門冬胺酸","離胺酸","丙胺酸"],a:0,e:"天門冬醯胺與麩醯胺側鏈含醯胺基（-CONH₂），為醯胺型胺基酸。"},
+ {q:"下列何者屬於「疏水性（非極性）胺基酸」？",o:["纈胺酸（Valine）","麩胺酸","離胺酸","絲胺酸"],a:0,e:"纈胺酸側鏈為非極性烷基，屬疏水性胺基酸；常埋在蛋白質內部。"},
+];
+
+const KEYS=["A","B","C","D"];
+const quiz=document.getElementById('quiz');
+let chosen=Array(QUESTIONS.length).fill(null);
+
+function build(){
+  quiz.innerHTML='';
+  QUESTIONS.forEach((item,i)=>{
+    const card=document.createElement('div');
+    card.className='card';card.id='card'+i;
+    let opts='';
+    item.o.forEach((t,j)=>{
+      opts+=`<label class="opt" data-q="${i}" data-o="${j}"><span class="k">${KEYS[j]}</span>${t}</label>`;
+    });
+    card.innerHTML=`<div class="q"><span class="num">${i+1}.</span>${item.q}</div>${opts}<div class="fb" id="fb${i}"></div>`;
+    quiz.appendChild(card);
+  });
+  refresh();
+}
+
+quiz.addEventListener('click',e=>{
+  const l=e.target.closest('.opt');
+  if(!l) return;
+  const i=+l.dataset.q, j=+l.dataset.o;
+  if(chosen[i]!==null) return;
+  chosen[i]=j;
+  const item=QUESTIONS[i];
+  const card=document.getElementById('card'+i);
+  card.classList.add('locked');
+  card.querySelectorAll('.opt').forEach(op=>{
+    const oj=+op.dataset.o;
+    if(oj===item.a) op.classList.add('correct');
+    else if(oj===j) op.classList.add('wrong');
+  });
+  const ok=(j===item.a);
+  const fb=document.getElementById('fb'+i);
+  fb.className='fb '+(ok?'ok':'no');
+  fb.style.display='block';
+  fb.innerHTML=ok
+    ? `<span class="tag">✔ 答對</span>${item.e}`
+    : `<span class="tag">✘ 答錯　正解：${KEYS[item.a]}</span>${item.e}`;
+  refresh();
+});
+
+function refresh(){
+  const done=chosen.filter(x=>x!==null).length;
+  const correct=chosen.reduce((s,c,i)=>s+(c===QUESTIONS[i].a?1:0),0);
+  document.getElementById('prog').textContent=`進度 ${done} / ${QUESTIONS.length}`;
+  document.getElementById('fill').style.width=(done/QUESTIONS.length*100)+'%';
+  document.getElementById('score').textContent=`答對 ${correct}`;
+  if(done===QUESTIONS.length){
+    const box=document.getElementById('done');box.style.display='block';
+    document.getElementById('bigScore').textContent=`${correct} / ${QUESTIONS.length}`;
+    const pct=correct/QUESTIONS.length;
+    document.getElementById('doneMsg').textContent=
+      pct===1?'滿分！第二版也全拿，觀念很穩。':pct>=0.8?'表現不錯，回頭看標紅那幾題即可。':pct>=0.6?'及格，建議把答錯的詳解再讀一遍。':'再練一輪，對照詳解複習觀念。';
+  }
+}
+
+document.getElementById('reset').addEventListener('click',()=>{
+  chosen=Array(QUESTIONS.length).fill(null);
+  document.getElementById('done').style.display='none';
+  build();
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+build();
+</script>
+</body>
+</html>
